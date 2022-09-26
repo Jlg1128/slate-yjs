@@ -1,69 +1,58 @@
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { withYHistory, withYjs, YjsEditor } from '@slate-yjs/core';
+import { slateNodesToInsertDelta, withYHistory, withYjs, YjsEditor } from '@slate-yjs/core';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createEditor, Descendant } from 'slate';
+import { createEditor, Descendant, Transforms } from 'slate';
 import { Slate, withReact } from 'slate-react';
 import * as Y from 'yjs';
 import { ConnectionToggle } from '../components/ConnectionToggle/ConnectionToggle';
 import { CustomEditable } from '../components/CustomEditable/CustomEditable';
 import { FormatToolbar } from '../components/FormatToolbar/FormatToolbar';
 import { HOCUSPOCUS_ENDPOINT_URL } from '../config';
+import initialValue from '../const';
 import { withMarkdown } from '../plugins/withMarkdown';
 
+const yDoc = new Y.Doc();
+
+// @ts-ignore
+window.yDoc = yDoc;
+// @ts-ignore
+window.Y = Y;
+// @ts-ignore
+window.slateNodesToInsertDelta = slateNodesToInsertDelta;
+// @ts-ignore
+window.Transforms = Transforms;
 export function SimplePage() {
   const [value, setValue] = useState<Descendant[]>([]);
   const [connected, setConnected] = useState(false);
 
-  const provider = useMemo(
-    () =>
-      new HocuspocusProvider({
-        url: HOCUSPOCUS_ENDPOINT_URL,
-        name: 'slate-yjs-demo',
-        onConnect: () => setConnected(true),
-        onDisconnect: () => setConnected(false),
-        connect: false,
-      }),
-    []
-  );
+  const sharedType = useMemo(() => {
+    // Load the initial value into the yjs document
+    let actualSharedType = yDoc.get('content', Y.XmlText);
+    // @ts-ignore
+    actualSharedType.applyDelta(slateNodesToInsertDelta(initialValue));
+    return actualSharedType as Y.XmlText;
+  }, []);
 
-  const toggleConnection = useCallback(() => {
-    if (connected) {
-      return provider.disconnect();
-    }
+  const editor = useMemo(() => withYjs(withReact(createEditor()), sharedType), []);
 
-    provider.connect();
-  }, [provider, connected]);
-
-  const editor = useMemo(() => {
-    const sharedType = provider.document.get('content', Y.XmlText) as Y.XmlText;
-
-    return withMarkdown(
-      withReact(
-        withYHistory(
-          withYjs(createEditor(), sharedType, { autoConnect: false })
-        )
-      )
-    );
-  }, [provider.document]);
-
-  // Connect editor and provider in useEffect to comply with concurrent mode
-  // requirements.
-  useEffect(() => {
-    provider.connect();
-    return () => provider.disconnect();
-  }, [provider]);
   useEffect(() => {
     YjsEditor.connect(editor);
     return () => YjsEditor.disconnect(editor);
   }, [editor]);
 
+  useEffect(() => {
+    // @ts-ignore
+    window.editor = editor;
+    // @ts-ignore
+    window.sharedType = sharedType;
+  }, []);
+
   return (
     <div className="flex justify-center my-32 mx-10">
-      <Slate value={value} onChange={setValue} editor={editor}>
+      <Slate value={value} onChange={(value) => setValue([...value])} editor={editor}>
         <FormatToolbar />
         <CustomEditable className="max-w-4xl w-full flex-col break-words" />
       </Slate>
-      <ConnectionToggle connected={connected} onClick={toggleConnection} />
     </div>
   );
 }

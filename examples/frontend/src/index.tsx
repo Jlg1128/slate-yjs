@@ -9,19 +9,17 @@ import { RemoteCursorsOverlayPage } from './pages/RemoteCursorOverlay';
 import { SimplePage } from './pages/Simple';
 
 ReactDOM.render(
-  <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/remote-cursors-overlay"
-          element={<RemoteCursorsOverlayPage />}
-        />
-        <Route path="/simple" element={<SimplePage />} />
-        <Route path="/" element={<Navigate to="/remote-cursors-overlay" />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Navigator />
-    </BrowserRouter>
-  </StrictMode>,
+  <BrowserRouter>
+    <Routes>
+      <Route
+        path="/"
+        element={<SimplePage />}
+      />
+      <Route path="/" element={<SimplePage />} />
+      <Route path="/remote-cursors-overlay" element={<Navigate to="/remote-cursors-overlay" />} />
+      {/* <Route path="*" element={<NotFound />} /> */}
+    </Routes>
+    <Navigator />
+  </BrowserRouter>,
   document.getElementById('root')
 );

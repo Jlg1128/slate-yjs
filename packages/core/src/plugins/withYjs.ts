@@ -162,6 +162,8 @@ export function withYjs<T extends Editor>(
     autoConnect = false,
   }: WithYjsOptions = {}
 ): T & YjsEditor {
+  console.log('🦊');
+  
   const e = editor as T & YjsEditor;
 
   e.sharedRoot = sharedRoot;

@@ -5,7 +5,8 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "composite": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "noImplicitAny": false,
   },
   "references": []
 }
